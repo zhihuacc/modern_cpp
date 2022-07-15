@@ -43,7 +43,9 @@ class list_ts {
 
 //TODO
 template <typename T>
-list_ts<T>::~list_ts() {}
+list_ts<T>::~list_ts() {
+    remove_if([](auto i){return true;});
+}
 
 template<typename T>
 template<typename F>
