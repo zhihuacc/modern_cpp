@@ -2,7 +2,7 @@
 #define _LIST_TS_H
 
 #include <memory> // shared_ptr, unique_ptr
-#include <mutex>  // mutex, lock_guard
+#include <mutex>  // mutex, lock_guard, unique_lock
 #include <functional> // std::function
 
 
@@ -18,7 +18,6 @@ class list_ts {
 
             node_ts() = default;
             node_ts(const T &value): data(std::make_shared<T>(value)) {}
-            // ~node_ts() {}
         };
         node_ts head;
     
@@ -39,9 +38,11 @@ class list_ts {
         template<typename F>
         void remove_if(F p);
 
+        // template<typename F>
+        // int count();
 };
 
-//TODO
+
 template <typename T>
 list_ts<T>::~list_ts() {
     remove_if([](auto i){return true;});
@@ -61,7 +62,6 @@ void list_ts<T>::for_each(F func) {
 
         curr_locker = std::move(next_locker);
     }
-
 }
 
 template <typename T>
