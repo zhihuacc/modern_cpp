@@ -36,7 +36,7 @@ unordered_hashmap_ts<K, V, Hash>::~unordered_hashmap_ts() {}
 
 
 template<typename K, typename V, typename Hash>
-bool  unordered_hashmap_ts<K, V, Hash>::get(const K &key, V &val) {
+bool unordered_hashmap_ts<K, V, Hash>::get(const K &key, V &val) {
 
     std::pair<K,V> found_pair;
     bool found = buckets[hasher(key) % buckets.size()].find_first_if(

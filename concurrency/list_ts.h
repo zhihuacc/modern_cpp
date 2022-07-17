@@ -18,6 +18,7 @@ class list_ts {
 
             node_ts() = default;
             node_ts(const T &data): data(data) {}
+            ~node_ts() = default;
         };
         node_ts head;
     
@@ -48,7 +49,7 @@ class list_ts {
 
 template <typename T>
 list_ts<T>::~list_ts() {
-    remove_if([](auto i){return true;});
+    remove_if([](auto i) {return true;});
 }
 
 template<typename T>
@@ -133,13 +134,16 @@ template<typename F>
 void list_ts<T>::remove_if(F p) {
     
     std::unique_lock<std::mutex> curr_locker(head.m);
-    for (node_ts *curr = &head, *next = head.next.get(); next != nullptr; next = next->next.get()) {
+    for (node_ts *curr = &head, *next = head.next.get(); next != nullptr; next = curr->next.get()) {
         // Lock curr -> Lock next
         std::unique_lock<std::mutex> next_locker(next->m);
         
         if (p(next->data)) {
 
-            curr->next = std::move(next->next);
+            //WARN: this move() will set next->next = nullptr,
+            // so the iter expression in for-loop should NOT be next = next->next.get(),
+            // otherwise, next would be nullptr and the for-loop would iterate only once.
+            curr->next = std::move(next->next);  
             next_locker.unlock();
         } else {
             // Unlock curr while holding next
