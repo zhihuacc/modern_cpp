@@ -33,8 +33,8 @@ class queue_ts {
         queue_ts();
         ~queue_ts();
 
-        queue_ts(const queue_ts &other) = delete;
-        queue_ts &operator=(const queue_ts&other) = delete;
+        queue_ts(const queue_ts &) = delete;
+        queue_ts &operator=(const queue_ts&) = delete;
         // Thread-safe push to tail
         void push(const T &value);
         // Thread-safe pop from head without blocking
