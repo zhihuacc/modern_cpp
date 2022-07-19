@@ -7,7 +7,7 @@
 
 #include "../list_ts.h"
 
-// list_ts<int> l0;
+
 //WARN: can not pass list_ts in the function by value or by reference,
 //  because the constructor of thread will copy its arguments ANYWAY, but list_ts is not allowed to be copied.
 //  Need use std::ref to pass list_ts to thread constructor.
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     {
         //Case 1: concurrent push_front()
         std::cout << "Case 1:" << std::endl;
-        
+
         list_ts<int> l0;
         int num_threads = 200;
         int num_nodes = 20000;
@@ -68,14 +68,14 @@ int main(int argc, char **argv) {
         std::cout << "Total before removing: " << count << std::endl;
 
         num_threads = 200;
-        std::vector<std::thread> threads(num_threads);
-        for (int i = 0; i < num_threads; ++i) {
+        std::vector<std::thread> threads(num_threads / 2);
+        for (int i = 0; i < num_threads / 2; ++i) {
             threads[i] = std::thread(remove_int_seq<int>, std::ref(l0), 0, count, num_threads, i); 
         }
 
         std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
-        for (int i = 0; i < num_threads; ++i) {
+        for (int i = 0; i < num_threads / 2; ++i) {
             threads[i].join();
         }
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         l0.for_each([&count](auto i) { count += 1;});
         
         std::cout << "Total after removing: " << count << std::endl;
-        assert((count == 0));
+        assert((count == total / 2));
     }
 
     // // Case 3: concurrent push_front() and remove_if()
