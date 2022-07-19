@@ -138,10 +138,10 @@ void list_ts<T>::remove_if(F p, bool first_only) {
         
         if (p(next->data)) {
 
-            //WARN: this statement is Necessory! It may segment fault without this in case of concurrent remove_if.
-            //  This may be bcas curr->next = std::move(next->next) would first destruct curr->next which in turn
-            //  destruct curr->next->next, i.e., next->next, where may have race-condition.
-            //  This statement avoids destruct curr->next before assign next-next.
+            //WARN: this statement is Necessory! It may segfault without this in case of concurrent remove_if.
+            //  This may be bcas curr->next = std::move(next->next) would first destruct curr->next which 
+            //  whould unlock curr->next.m. So calling next_locker.unlock would unlock a unlocked mutex which cause segfault.
+            //  This statement avoids destruct curr->next before unlock current->next.m.
             std::unique_ptr<node_ts> old = std::move(curr->next);
             //WARN: this move() will set next->next = nullptr,
             // so the iter expression in for-loop should NOT be next = next->next.get(),
