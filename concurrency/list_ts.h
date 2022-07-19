@@ -40,10 +40,8 @@ class list_ts {
         void update_first_if(F p, const T &data, bool add=true);
 
         template<typename F>
-        void remove_if(F p);
+        void remove_if(F p, bool first_only=false);
 
-        // template<typename F>
-        // int count();
 };
 
 
@@ -131,7 +129,7 @@ void list_ts<T>::update_first_if(F p, const T &data, bool add) {
 
 template<typename T>
 template<typename F>
-void list_ts<T>::remove_if(F p) {
+void list_ts<T>::remove_if(F p, bool first_only) {
     
     std::unique_lock<std::mutex> curr_locker(head.m);
     for (node_ts *curr = &head, *next = head.next.get(); next != nullptr; next = curr->next.get()) {
@@ -140,11 +138,20 @@ void list_ts<T>::remove_if(F p) {
         
         if (p(next->data)) {
 
+            //WARN: this statement is Necessory! It may segment fault without this in case of concurrent remove_if.
+            //  This may be bcas curr->next = std::move(next->next) would first destruct curr->next which in turn
+            //  destruct curr->next->next, i.e., next->next, where may have race-condition.
+            //  This statement avoids destruct curr->next before assign next-next.
+            std::unique_ptr<node_ts> old = std::move(curr->next);
             //WARN: this move() will set next->next = nullptr,
             // so the iter expression in for-loop should NOT be next = next->next.get(),
             // otherwise, next would be nullptr and the for-loop would iterate only once.
             curr->next = std::move(next->next);  
             next_locker.unlock();
+
+            if (first_only) {
+                return;
+            }
         } else {
             // Unlock curr while holding next
             curr_locker.unlock();
