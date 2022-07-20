@@ -31,7 +31,7 @@ class list_ts {
         void push_front(const T &data);
         
         template<typename F>
-        void for_each(F func);  //TODO std::function works here ?
+        void for_each(F func);  // TODO std::function works here ?
 
         template<typename F>
         bool find_first_if(F p, T &data);
@@ -47,6 +47,9 @@ class list_ts {
 
 template <typename T>
 list_ts<T>::~list_ts() {
+    // WARN: Explicitly remove nodes. Otherwise, nodes will be destructed implicitly 
+    //   by recursively calling destructor for each node 
+    //   on stack, which causes stack overflow when the list is too long.
     remove_if([](auto i) {return true;});
 }
 
@@ -138,16 +141,22 @@ void list_ts<T>::remove_if(F p, bool first_only) {
         
         if (p(next->data)) {
 
-            //WARN: this statement is Necessory! It may segfault without this in case of concurrent remove_if.
+            // WARN: this statement is Necessory! It may segfault without this in case of concurrent remove_if.
             //  This may be bcas curr->next = std::move(next->next) would first destruct curr->next which 
-            //  whould unlock curr->next.m. So calling next_locker.unlock would unlock a unlocked mutex which cause segfault.
+            //  whould destroy curr->next.m. So calling next_locker.unlock would unlock a destroyed mutex which cause segfault.
             //  This statement avoids destruct curr->next before unlock current->next.m.
             std::unique_ptr<node_ts> old = std::move(curr->next);
-            //WARN: this move() will set next->next = nullptr,
+            // WARN: this move() will set next->next = nullptr,
             // so the iter expression in for-loop should NOT be next = next->next.get(),
             // otherwise, next would be nullptr and the for-loop would iterate only once.
-            curr->next = std::move(next->next);  
+            curr->next = std::move(next->next); 
+            // WARN: Necessory to unlock next.m even though next will be deleted, becas 
             next_locker.unlock();
+
+            // WARN: Need make sure no threads are holding or waiting a mutex before destroying the mutex.
+            //  Here the node pointed by next is held by current thread only, becas
+            //  other threads are being blocked by curr->m and never have a chance to touch next->m
+            //  so it's ok for current thread to destroy it after unlocking it.
 
             if (first_only) {
                 return;
