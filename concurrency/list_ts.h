@@ -12,7 +12,7 @@ class list_ts {
 
     private:
         struct node_ts {
-            std::mutex                  m;
+            mutable std::mutex                  m;
             T                           data;
             std::unique_ptr<node_ts>    next;  // each node can only be pointed by its parent
 
@@ -32,7 +32,7 @@ class list_ts {
         
         // Read-only to the list. If need modify the list, use update_if()
         template<typename F>
-        void for_each(F func);
+        void for_each(F func) const;
 
         template<typename F>
         bool find_first_if(F p, T &data);
@@ -56,7 +56,7 @@ list_ts<T>::~list_ts() {
 
 template<typename T>
 template<typename F>
-void list_ts<T>::for_each(F func) {
+void list_ts<T>::for_each(F func) const {
 
     std::unique_lock<std::mutex> curr_locker(head.m);
     for (node_ts *next = head.next.get(); next != nullptr; next = next->next.get()) {

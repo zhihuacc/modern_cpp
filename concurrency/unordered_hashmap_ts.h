@@ -12,13 +12,14 @@ class unordered_hashmap_ts {
 
         struct bucket {
             list_ts<std::pair<K,V>> list;
-            // WARN: mutable keyword is neccessory. Otherwise, lock on the shared_mutex would cause EX_BAD_ACC
-            mutable std::shared_mutex mutex;  
+            // WARN: this mutex is to protect aginst duplicates of same keys in the bucket.
+            // mutable keyword can be omitted, but it may cause runtime errors when using a const unordered_hashmap_ts.
+            mutable std::shared_mutex mutex;
         };
 
         std::vector<bucket> buckets;
-        //std::vector<mutable std::shared_mutex>  bkt_mutexes;
         Hash hasher;
+
     public:
 
         unordered_hashmap_ts();
@@ -31,7 +32,7 @@ class unordered_hashmap_ts {
         void set(const K &key, const V &val);
         void del(const K &key);
         template<typename F>
-        void for_each(F func);
+        void for_each(F func) const;
 };
 
 template<typename K, typename V, typename Hash>
@@ -50,7 +51,7 @@ bool unordered_hashmap_ts<K, V, Hash>::get(const K &key, V &val) {
 
     std::pair<K,V> found_pair;
     bool found = buckets[hasher(key) % buckets.size()].list.find_first_if(
-        [&](auto &pair) {
+        [&key](auto &pair) {
             return pair.first == key;
         },
         found_pair
@@ -71,7 +72,7 @@ void unordered_hashmap_ts<K, V, Hash>::set(const K &key, const V &new_val) {
 
     std::pair<K,V> new_pair(key, new_val);
     int updated = buckets[bkt_idx].list.update_if(
-        [&](auto &pair) {
+        [&key](auto &pair) {
             return pair.first == key;
         },
         new_pair,
@@ -88,7 +89,7 @@ void unordered_hashmap_ts<K, V, Hash>::del(const K &key) {
 
     int bkt_idx = hasher(key) % buckets.size();
     buckets[bkt_idx].remove_if(
-        [&](auto &pair) {
+        [&key](auto &pair) {
             return pair.first == key;
         }
     );
@@ -96,7 +97,7 @@ void unordered_hashmap_ts<K, V, Hash>::del(const K &key) {
 
 template<typename K, typename V, typename Hash>
 template<typename F>
-void unordered_hashmap_ts<K, V, Hash>::for_each(F func) {
+void unordered_hashmap_ts<K, V, Hash>::for_each(F func) const {
 
     int num = buckets.size();
     for (int i = 0; i < num; ++i) {
