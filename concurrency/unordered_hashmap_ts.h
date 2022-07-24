@@ -50,7 +50,10 @@ template<typename K, typename V, typename Hash>
 bool unordered_hashmap_ts<K, V, Hash>::get(const K &key, V &val) {
 
     std::pair<K,V> found_pair;
-    bool found = buckets[hasher(key) % buckets.size()].list.find_first_if(
+    int bkt_idx = hasher(key) % buckets.size();
+    std::shared_lock<std::shared_mutex> bkt_lock(buckets[bkt_idx].mutex);
+
+    bool found = buckets[bkt_idx].list.find_first_if(
         [&key](auto &pair) {
             return pair.first == key;
         },
@@ -88,10 +91,13 @@ template<typename K, typename V, typename Hash>
 void unordered_hashmap_ts<K, V, Hash>::del(const K &key) {
 
     int bkt_idx = hasher(key) % buckets.size();
-    buckets[bkt_idx].remove_if(
+    std::unique_lock<std::shared_mutex> bkt_lock(buckets[bkt_idx].mutex);
+
+    buckets[bkt_idx].list.remove_if(
         [&key](auto &pair) {
             return pair.first == key;
-        }
+        },
+        true
     );
 }
 

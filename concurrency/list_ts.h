@@ -41,7 +41,7 @@ class list_ts {
         int update_if(F p, const T &data, bool first_only = false);
 
         template<typename F>
-        void remove_if(F p, bool first_only=false);
+        int remove_if(F p, bool first_only=false);
 
 };
 
@@ -131,8 +131,9 @@ int list_ts<T>::update_if(F p, const T &data, bool first_only) {
 
 template<typename T>
 template<typename F>
-void list_ts<T>::remove_if(F p, bool first_only) {
+int list_ts<T>::remove_if(F p, bool first_only) {
     
+    int deleted = 0;
     std::unique_lock<std::mutex> curr_locker(head.m);
     // WARN: can't use next = next->next.get()
     for (node_ts *curr = &head, *next = head.next.get(); next != nullptr; next = curr->next.get()) {
@@ -157,9 +158,9 @@ void list_ts<T>::remove_if(F p, bool first_only) {
             //  Here the node pointed by next is held by current thread only, becas
             //  other threads are being blocked by curr->m and haven't had a chance to touch next->m
             //  so it's ok for current thread to destroy it after unlocking it.
-
+            deleted++;
             if (first_only) {
-                return;
+                return deleted;
             }
         } else {
             // Unlock curr while holding next
@@ -168,6 +169,8 @@ void list_ts<T>::remove_if(F p, bool first_only) {
             curr_locker = std::move(next_locker);
         }
     }
+
+    return deleted;
 }
 
 #endif
