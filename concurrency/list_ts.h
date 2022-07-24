@@ -30,14 +30,15 @@ class list_ts {
 
         void push_front(const T &data);
         
+        // Read-only to the list. If need modify the list, use update_if()
         template<typename F>
-        void for_each(F func);  // TODO std::function works here ?
+        void for_each(F func);
 
         template<typename F>
         bool find_first_if(F p, T &data);
 
         template<typename F>
-        void update_first_if(F p, const T &data, bool add=true);
+        int update_if(F p, const T &data, bool first_only = false);
 
         template<typename F>
         void remove_if(F p, bool first_only=false);
@@ -104,30 +105,28 @@ bool list_ts<T>::find_first_if(F p, T &data) {
 
 template<typename T>
 template<typename F>
-void list_ts<T>::update_first_if(F p, const T &data, bool add) {
+int list_ts<T>::update_if(F p, const T &data, bool first_only) {
 
-    {
-        // Try to find and update existing node
-        std::unique_lock<std::mutex> curr_locker(head.m);
-        for (node_ts *next = head.next.get(); next != nullptr; next = next->next.get()) {
-            // Lock curr -> Lock next -> Unlock curr
-            std::unique_lock<std::mutex> next_locker(next->m);
-            curr_locker.unlock();
+    int updated = 0;
+    // Try to find and update existing node
+    std::unique_lock<std::mutex> curr_locker(head.m);
+    for (node_ts *next = head.next.get(); next != nullptr; next = next->next.get()) {
+        // Lock curr -> Lock next -> Unlock curr
+        std::unique_lock<std::mutex> next_locker(next->m);
+        curr_locker.unlock();
 
-            if (p(next->data)) {
-                // Found and update
-                next->data = data;
-                return;
-            } 
-            curr_locker = std::move(next_locker);
-        }
+        if (p(next->data)) {
+            // Found and update
+            next->data = data;
+            updated++;
+
+            if (first_only)
+                return updated;
+        } 
+        curr_locker = std::move(next_locker);
     }
-    
-    // If not found, push new node
-    //   Need unlock head.m before call push_front(), since push_front() will lock head.m
-    if (add)
-        push_front(data);
 
+    return updated;
 }
 
 template<typename T>
@@ -135,6 +134,7 @@ template<typename F>
 void list_ts<T>::remove_if(F p, bool first_only) {
     
     std::unique_lock<std::mutex> curr_locker(head.m);
+    // WARN: can't use next = next->next.get()
     for (node_ts *curr = &head, *next = head.next.get(); next != nullptr; next = curr->next.get()) {
         // Lock curr -> Lock next
         std::unique_lock<std::mutex> next_locker(next->m);
@@ -147,15 +147,15 @@ void list_ts<T>::remove_if(F p, bool first_only) {
             //  This statement avoids destruct curr->next before unlock current->next.m.
             std::unique_ptr<node_ts> old = std::move(curr->next);
             // WARN: this move() will set next->next = nullptr,
-            // so the iter expression in for-loop should NOT be next = next->next.get(),
-            // otherwise, next would be nullptr and the for-loop would iterate only once.
+            //  so the iter expression in for-loop should NOT be next = next->next.get(),
+            //  instead, use curr->next.get()
             curr->next = std::move(next->next); 
             // WARN: Necessory to unlock next.m even though next will be deleted, becas 
             next_locker.unlock();
 
             // WARN: Need make sure no threads are holding or waiting a mutex before destroying the mutex.
             //  Here the node pointed by next is held by current thread only, becas
-            //  other threads are being blocked by curr->m and never have a chance to touch next->m
+            //  other threads are being blocked by curr->m and haven't had a chance to touch next->m
             //  so it's ok for current thread to destroy it after unlocking it.
 
             if (first_only) {
