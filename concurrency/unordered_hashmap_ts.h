@@ -17,9 +17,7 @@ class unordered_hashmap_ts {
         };
 
         std::vector<bucket> buckets;
-
-        // std::vector<list_ts<std::pair<K,V>>> buckets;
-        // mutable std::vector<std::shared_mutex>  bkt_mutexes;
+        //std::vector<mutable std::shared_mutex>  bkt_mutexes;
         Hash hasher;
     public:
 
@@ -37,10 +35,7 @@ class unordered_hashmap_ts {
 };
 
 template<typename K, typename V, typename Hash>
-unordered_hashmap_ts<K, V, Hash>::unordered_hashmap_ts(): buckets(std::vector<list_ts<std::pair<K,V>>>(19)), hasher(Hash()) {}
-
-// template<typename K, typename V, typename Hash>
-// unordered_hashmap_ts<K, V, Hash>::unordered_hashmap_ts(int bsize, const Hash &h): buckets(std::vector<list_ts<std::pair<K,V>>>(bsize)), hasher(h) {}
+unordered_hashmap_ts<K, V, Hash>::unordered_hashmap_ts(): buckets(std::vector<bucket>(19)), hasher(Hash()) {}
 
 template<typename K, typename V, typename Hash>
 unordered_hashmap_ts<K, V, Hash>::unordered_hashmap_ts(int bsize, const Hash &h): buckets(std::vector<bucket>(bsize)), hasher(h) {}
