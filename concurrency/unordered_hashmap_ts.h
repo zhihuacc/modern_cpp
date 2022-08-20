@@ -13,7 +13,7 @@ class unordered_hashmap_ts {
         struct bucket {
             list_ts<std::pair<K,V>> list;
             // WARN: this mutex is to protect aginst duplicates of same keys in the bucket.
-            // mutable keyword can be omitted, but it may cause runtime errors when using a const unordered_hashmap_ts.
+            // mutable keyword can be omitted, but it may cause errors when using a const unordered_hashmap_ts.
             mutable std::shared_mutex mutex;
         };
 

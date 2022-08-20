@@ -73,34 +73,37 @@ int main(int argc, char **argv) {
     hashmap.set(23, "zhihua");
     hashmap.set(24, "john");
     hashmap.set(89, "jane");
+    hashmap.set(90, "jane1");
+    hashmap.set(91, "jane2");
+    hashmap.set(92, "jane3");
     hashmap.set(102, "david");
 
     bool found;
     std::string val;
-    found = hashmap.get(89, val);
+    found = hashmap.get(92, val);
     if (found)
-        std::cout << "found " << val << std::endl;
+        std::cout << "Found " << val << std::endl;
     else 
-        std::cout << "not found" << std::endl;
+        std::cout << "Not found" << std::endl;
 
     found = hashmap.get(1, val);
     if (found)
-        std::cout << "found " << val << std::endl;
+        std::cout << "Found " << val << std::endl;
     else 
-        std::cout << "not found" << std::endl;
+        std::cout << "Not found" << std::endl;
 
-    hashmap.del(89);
-    found = hashmap.get(89, val);
+    hashmap.del(92);
+    found = hashmap.get(92, val);
     if (found)
-        std::cout << "found " << val << std::endl;
+        std::cout << "Found " << val << std::endl;
     else 
-        std::cout << "not found" << std::endl;
+        std::cout << "Not found" << std::endl;
 
     hashmap.set(102, "DAVID");
     found = hashmap.get(102, val);
     if (found)
-        std::cout << "found " << val << std::endl;
+        std::cout << "Found " << val << std::endl;
     else 
-        std::cout << "not found" << std::endl;
+        std::cout << "Not found" << std::endl;
     
 }
