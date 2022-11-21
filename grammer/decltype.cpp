@@ -7,6 +7,7 @@ int main(int argc, char **argv) {
     int i = 0, j = 1;
 
     i, j = 2;  // This is an expression return j as lvalue reference
+    std::cout << "j = " << j << std::endl;
     (j) = 3;   // This is an expression return j as lvalue reference
     std::cout << "j = " << j << std::endl;
 
