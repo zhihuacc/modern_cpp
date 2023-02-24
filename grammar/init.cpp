@@ -12,7 +12,7 @@ class Bar {
 public:
     int a;
     std::string b;
-
+    double c;
     Bar(int x, const std::string &y): a(x), b(y) {std::cout << "Bar ctr" << std::endl;}
 };
 
