@@ -6,7 +6,7 @@ project(Modern-Cpp)
 
 set(CMAKE_BUILD_TYPE "Release")
 
-set(CMAKE_CXX_FLAGS_DEBUG "-O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -fno-elide-constructors")
 set(CMAKE_C_FLAGS_DEBUG "-O0")
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")

@@ -1,3 +1,8 @@
 add_executable(auto auto.cpp)
 add_executable(decltype decltype.cpp)
 add_executable(init init.cpp)
+add_executable(rvo rvo.cpp)
+add_executable(overload overload.cpp)
+add_executable(specialization specialization.cpp)
+add_executable(for for.cpp)
+add_executable(rvalue_ref rvalue_ref.cpp)
